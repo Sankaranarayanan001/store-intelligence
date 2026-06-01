@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apex Retail — Store Intelligence</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #0a0a0f;
+        color: #e0e0e0;
+        font-family: "Segoe UI", sans-serif;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      header {
+        text-align: center;
+        padding: 16px;
+        margin-bottom: 20px;
+        border: 1px solid #f5c542;
+        border-radius: 8px;
+        background: #0f0f1a;
+      }
+
+      header h1 {
+        color: #f5c542;
+        font-size: 22px;
+        letter-spacing: 2px;
+      }
+
+      header p {
+        color: #888;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      #status-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #2ecc71;
+        margin-right: 6px;
+        animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      .grid-top {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .grid-bottom {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .card {
+        background: #0f0f1a;
+        border-radius: 8px;
+        padding: 16px;
+        border: 1px solid #222;
+      }
+
+      .card-title {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #222;
+      }
+
+      .yellow {
+        color: #f5c542;
+        border-color: #f5c542 !important;
+      }
+      .blue {
+        color: #4a9eff;
+        border-color: #4a9eff !important;
+      }
+      .purple {
+        color: #c084fc;
+        border-color: #c084fc !important;
+      }
+      .red {
+        color: #f87171;
+        border-color: #f87171 !important;
+      }
+      .green {
+        color: #4ade80;
+        border-color: #4ade80 !important;
+      }
+
+      /* metrics grid */
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .metric-box {
+        background: #141420;
+        border-radius: 6px;
+        padding: 14px;
+        text-align: center;
+      }
+
+      .metric-box .label {
+        font-size: 11px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+      }
+
+      .metric-box .value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #f5c542;
+      }
+
+      .metric-box .value.green {
+        color: #4ade80;
+      }
+      .metric-box .value.red {
+        color: #f87171;
+      }
+      .metric-box .value.yellow {
+        color: #f5c542;
+      }
+
+      /* funnel */
+      .funnel-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        gap: 10px;
+      }
+
+      .funnel-label {
+        width: 150px;
+        font-size: 13px;
+        color: #aaa;
+        flex-shrink: 0;
+      }
+
+      .funnel-bar-wrap {
+        flex: 1;
+        background: #1a1a2e;
+        border-radius: 4px;
+        height: 22px;
+        overflow: hidden;
+      }
+
+      .funnel-bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.6s ease;
+        display: flex;
+        align-items: center;
+        padding-left: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #000;
+        min-width: 30px;
+      }
+
+      .funnel-count {
+        width: 40px;
+        text-align: right;
+        font-size: 13px;
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .funnel-drop {
+        width: 50px;
+        text-align: right;
+        font-size: 12px;
+        color: #f87171;
+      }
+
+      /* zone table */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th {
+        text-align: left;
+        color: #555;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 6px 8px;
+        border-bottom: 1px solid #1e1e2e;
+      }
+
+      td {
+        padding: 8px 8px;
+        border-bottom: 1px solid #111;
+        color: #ccc;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .badge-critical {
+        background: #3b1010;
+        color: #f87171;
+      }
+      .badge-warn {
+        background: #2d2010;
+        color: #fbbf24;
+      }
+      .badge-info {
+        background: #0f2010;
+        color: #4ade80;
+      }
+      .badge-ok {
+        background: #0f2010;
+        color: #4ade80;
+      }
+      .badge-stale {
+        background: #3b1010;
+        color: #f87171;
+      }
+      .badge-waiting {
+        background: #1a1a10;
+        color: #fbbf24;
+      }
+
+      /* health */
+      .health-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #111;
+      }
+
+      .health-row:last-child {
+        border-bottom: none;
+      }
+
+      .store-name {
+        font-weight: 600;
+        color: #4a9eff;
+        font-size: 14px;
+      }
+      .last-event {
+        color: #666;
+        font-size: 12px;
+      }
+
+      /* refresh bar */
+      #refresh-bar-wrap {
+        height: 3px;
+        background: #1a1a2e;
+        border-radius: 2px;
+        margin-top: 16px;
+        overflow: hidden;
+      }
+
+      #refresh-bar {
+        height: 100%;
+        background: #f5c542;
+        width: 100%;
+        transition: width linear;
+      }
+
+      .no-data {
+        color: #444;
+        font-size: 13px;
+        padding: 8px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>⬡ APEX RETAIL — STORE INTELLIGENCE</h1>
+      <p>
+        <span id="status-dot"></span>
+        <span id="header-status">Live · Refreshing every 3s · </span>
+        <span id="header-time"></span>
+      </p>
+    </header>
+
+    <div class="grid-top">
+      <!-- Live Metrics -->
+      <div class="card yellow">
+        <div class="card-title yellow">Live Metrics — STORE_BLR_002</div>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="label">Unique Visitors</div>
+            <div class="value yellow" id="m-visitors">—</div>
+          </div>
+          <div class="metric-box">
+            <div class="label">Purchased</div>
+            <div class="value green" id="m-purchased">—</div>
+          </div>
+          <div class="metric-box">
+            <div class="label">Conversion Rate</div>
+            <div class="value" id="m-conv">—</div>
+          </div>
+          <div class="metric-box">
+            <div class="label">Queue Depth</div>
+            <div class="value" id="m-queue">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conversion Funnel -->
+      <div class="card blue">
+        <div class="card-title blue">Conversion Funnel</div>
+        <div id="funnel-container">
+          <div class="no-data">Loading funnel data...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-bottom">
+      <!-- Zone Activity -->
+      <div class="card purple">
+        <div class="card-title purple">Zone Activity</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Zone</th>
+              <th>Visits</th>
+              <th>Avg Dwell</th>
+            </tr>
+          </thead>
+          <tbody id="zone-tbody">
+            <tr>
+              <td colspan="3" class="no-data">No zone data yet</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Anomalies -->
+      <div class="card red">
+        <div class="card-title red">Anomalies</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Severity</th>
+              <th>Detail</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="anomaly-tbody">
+            <tr>
+              <td colspan="4" class="no-data">Checking...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Health -->
+    <div class="card green">
+      <div class="card-title green">Health</div>
+      <div id="health-container">
+        <div class="no-data">Connecting to API...</div>
+      </div>
+    </div>
+
+    <div id="refresh-bar-wrap">
+      <div id="refresh-bar"></div>
+    </div>
+
+    <script>
+      const STORE = "STORE_BLR_002";
+      const API = "http://localhost:8000";
+      const REFRESH = 3000;
+
+      const FUNNEL_COLORS = ["#f5c542", "#4a9eff", "#c084fc", "#4ade80"];
+
+      async function fetchJSON(url) {
+        try {
+          const r = await fetch(url);
+          if (r.ok) return await r.json();
+        } catch (e) {}
+        return null;
+      }
+
+      function setEl(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+      }
+
+      function convColor(rate) {
+        if (rate >= 0.3) return "green";
+        if (rate >= 0.1) return "yellow";
+        return "red";
+      }
+
+      function queueColor(depth) {
+        if (depth >= 8) return "red";
+        if (depth >= 5) return "yellow";
+        return "green";
+      }
+
+      function updateMetrics(data) {
+        if (!data) return;
+        const visitors = data.unique_visitors ?? 0;
+        const purchased = data.purchased ?? 0;
+        const conv = data.conversion_rate ?? 0;
+        const queue = data.queue_depth ?? 0;
+
+        setEl("m-visitors", visitors);
+        setEl("m-purchased", purchased);
+
+        const convEl = document.getElementById("m-conv");
+        convEl.textContent = (conv * 100).toFixed(1) + "%";
+        convEl.className = "value " + convColor(conv);
+
+        const queueEl = document.getElementById("m-queue");
+        queueEl.textContent = queue;
+        queueEl.className = "value " + queueColor(queue);
+
+        // zone table
+        const zones = data.zone_dwell ?? [];
+        const tbody = document.getElementById("zone-tbody");
+        if (zones.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="3" class="no-data">No zone data yet</td></tr>';
+        } else {
+          tbody.innerHTML = zones
+            .map(
+              (z) => `
+      <tr>
+        <td>${z.zone_id}</td>
+        <td>${z.visits}</td>
+        <td>${z.avg_dwell_sec?.toFixed(1)}s</td>
+      </tr>
+    `,
+            )
+            .join("");
+        }
+      }
+
+      function updateFunnel(data) {
+        if (!data) return;
+        const stages = data.stages ?? [];
+        const container = document.getElementById("funnel-container");
+        if (stages.length === 0) {
+          container.innerHTML = '<div class="no-data">No funnel data</div>';
+          return;
+        }
+        container.innerHTML = stages
+          .map(
+            (s, i) => `
+    <div class="funnel-row">
+      <div class="funnel-label">${s.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar"
+             style="width:${s.pct_of_total}%;background:${FUNNEL_COLORS[i]}">
+          ${s.pct_of_total?.toFixed(0)}%
+        </div>
+      </div>
+      <div class="funnel-count">${s.count}</div>
+      <div class="funnel-drop">${s.dropoff_pct > 0 ? "-" + s.dropoff_pct?.toFixed(1) + "%" : ""}</div>
+    </div>
+  `,
+          )
+          .join("");
+      }
+
+      function updateAnomalies(data) {
+        if (!data) return;
+        const anomalies = data.anomalies ?? [];
+        const tbody = document.getElementById("anomaly-tbody");
+        tbody.innerHTML = anomalies
+          .map((a) => {
+            const sev = a.severity?.toLowerCase();
+            return `
+      <tr>
+        <td style="font-weight:600">${a.type}</td>
+        <td><span class="badge badge-${sev}">${a.severity}</span></td>
+        <td>${a.detail}</td>
+        <td style="color:#888;font-size:12px">${a.suggested_action}</td>
+      </tr>
+    `;
+          })
+          .join("");
+      }
+
+      function updateHealth(data) {
+        if (!data) return;
+        const stores = data.stores ?? [];
+        const container = document.getElementById("health-container");
+        if (stores.length === 0) {
+          container.innerHTML = `
+      <div class="health-row">
+        <div>
+          <div class="store-name">—</div>
+          <div class="last-event">No events ingested yet</div>
+        </div>
+        <span class="badge badge-waiting">WAITING</span>
+      </div>`;
+          return;
+        }
+        container.innerHTML = stores
+          .map((s) => {
+            const status = s.feed_status;
+            const badgeClass =
+              status === "STALE_FEED" ? "badge-stale" : "badge-ok";
+            const badgeText = status === "STALE_FEED" ? "STALE" : "OK";
+            const lag = s.lag_minutes
+              ? s.lag_minutes.toFixed(1) + " min lag"
+              : "";
+            return `
+      <div class="health-row">
+        <div>
+          <div class="store-name">${s.store_id}</div>
+          <div class="last-event">
+            Last event: ${s.last_event_timestamp?.substring(0, 19) ?? "—"}
+            ${lag ? " · " + lag : ""}
+          </div>
+        </div>
+        <span class="badge ${badgeClass}">${badgeText}</span>
+      </div>
+    `;
+          })
+          .join("");
+      }
+
+      function updateTime() {
+        const now = new Date();
+        document.getElementById("header-time").textContent = now
+          .toISOString()
+          .replace("T", " ")
+          .substring(0, 19);
+      }
+
+      function animateRefreshBar() {
+        const bar = document.getElementById("refresh-bar");
+        bar.style.transition = "none";
+        bar.style.width = "100%";
+        setTimeout(() => {
+          bar.style.transition = `width ${REFRESH}ms linear`;
+          bar.style.width = "0%";
+        }, 50);
+      }
+
+      async function refresh() {
+        updateTime();
+        animateRefreshBar();
+
+        const [metrics, funnel, anomalies, health] = await Promise.all([
+          fetchJSON(`${API}/stores/${STORE}/metrics`),
+          fetchJSON(`${API}/stores/${STORE}/funnel`),
+          fetchJSON(`${API}/stores/${STORE}/anomalies`),
+          fetchJSON(`${API}/health`),
+        ]);
+
+        updateMetrics(metrics);
+        updateFunnel(funnel);
+        updateAnomalies(anomalies);
+        updateHealth(health);
+      }
+
+      // start
+      refresh();
+      setInterval(refresh, REFRESH);
+    </script>
+  </body>
+</html>

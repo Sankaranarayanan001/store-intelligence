@@ -1,0 +1,10 @@
+ultralytics
+fastapi
+uvicorn[standard]
+sqlalchemy
+aiosqlite
+pydantic
+pytest
+httpx
+python-multipart
+aiofiles
