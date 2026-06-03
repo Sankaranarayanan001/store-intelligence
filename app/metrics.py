@@ -109,3 +109,52 @@ async def get_metrics(store_id: str):
             "zone_dwell": zone_dwell,
             "data_note": "live — not cached"
         }
+        
+async def get_heatmap(store_id: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+
+        cursor = await db.execute("""
+            SELECT zone_id,
+                   COUNT(*) as visit_count,
+                   ROUND(AVG(dwell_ms) / 1000.0, 1) as avg_dwell_sec
+            FROM events
+            WHERE store_id = ?
+              AND is_staff = 0
+              AND zone_id IS NOT NULL
+              AND event_type IN ('ZONE_ENTER', 'ZONE_DWELL')
+            GROUP BY zone_id
+        """, (store_id,))
+        rows = await cursor.fetchall()
+
+        if not rows:
+            return {
+                "store_id": store_id,
+                "data_confidence": "low",
+                "zones": []
+            }
+
+        max_visits = max(r["visit_count"] for r in rows) or 1
+        max_dwell  = max(r["avg_dwell_sec"] for r in rows) or 1
+        total_sessions = sum(r["visit_count"] for r in rows)
+
+        zones = []
+        for r in rows:
+            normalized_visits = round((r["visit_count"] / max_visits) * 100)
+            normalized_dwell  = round((r["avg_dwell_sec"] / max_dwell) * 100)
+            zones.append({
+                "zone_id":       r["zone_id"],
+                "visit_count":   r["visit_count"],
+                "avg_dwell_sec": r["avg_dwell_sec"],
+                "visit_score":   normalized_visits,
+                "dwell_score":   normalized_dwell,
+                "heat_score":    round((normalized_visits + normalized_dwell) / 2)
+            })
+
+        zones.sort(key=lambda x: x["heat_score"], reverse=True)
+
+        return {
+            "store_id":        store_id,
+            "data_confidence": "low" if total_sessions < 20 else "high",
+            "zones":           zones
+        }
