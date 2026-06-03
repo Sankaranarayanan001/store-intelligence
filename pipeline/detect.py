@@ -17,7 +17,7 @@ CAMERA_ROLES = {
 }
 
 STORE_ID   = "STORE_BLR_002"
-BASE_TIME  = datetime(2026, 6, 1, 14, 0, 0, tzinfo=timezone.utc)
+BASE_TIME = datetime(2026, 4, 10, 12, 0, 0, tzinfo=timezone.utc)
 FRAME_H    = 1080
 ENTRY_LINE = FRAME_H // 2   # horizontal line across frame for entry/exit
 CONF_THRESHOLD = 0.35       # ignore detections below this confidence

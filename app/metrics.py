@@ -17,7 +17,25 @@ async def get_metrics(store_id: str):
         row = await cursor.fetchone()
         unique_visitors = row["count"] if row else 0
 
-        # purchased visitors
+        # correlate billing zone visitors with POS transactions
+        # visitor in billing zone within 5 minutes before transaction = purchased
+        await db.execute("""
+            UPDATE sessions SET purchased = 1
+            WHERE store_id = ? AND is_staff = 0
+            AND visitor_id IN (
+                SELECT DISTINCT e.visitor_id
+                FROM events e
+                JOIN pos_transactions p
+                  ON p.store_id = e.store_id
+                 AND e.timestamp <= p.timestamp
+                 AND e.timestamp >= datetime(p.timestamp, '-5 minutes')
+                WHERE e.store_id = ?
+                  AND e.zone_id = 'BILLING_AREA'
+                  AND e.is_staff = 0
+            )
+        """, (store_id, store_id))
+        await db.commit()
+
         cursor = await db.execute("""
             SELECT COUNT(DISTINCT visitor_id) as count
             FROM sessions
@@ -69,7 +87,8 @@ async def get_metrics(store_id: str):
         # abandonment rate
         cursor = await db.execute("""
             SELECT COUNT(*) as count FROM events
-            WHERE store_id = ? AND event_type = 'BILLING_QUEUE_ABANDON'
+            WHERE store_id = ?
+              AND event_type = 'BILLING_QUEUE_ABANDON'
               AND is_staff = 0
         """, (store_id,))
         row = await cursor.fetchone()

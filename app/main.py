@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from app.db import init_db
+    from app.pos_loader import load_pos_transactions
     await init_db()
+    await load_pos_transactions("./data/pos_transactions.csv")
     yield
 
 app = FastAPI(lifespan=lifespan)
