@@ -7,7 +7,7 @@ async def get_funnel(store_id: str):
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
 
-        # Step 1 — total unique customer visitors (exclude staff)
+        # Step 1 - total unique customer visitors
         cursor = await db.execute("""
             SELECT COUNT(DISTINCT visitor_id) as count
             FROM sessions
@@ -16,19 +16,19 @@ async def get_funnel(store_id: str):
         row = await cursor.fetchone()
         total_entries = row["count"] if row else 0
 
-        # Step 2 — visitors who entered at least one zone
+        # Step 2 - visitors who entered at least one zone
         cursor = await db.execute("""
             SELECT COUNT(DISTINCT visitor_id) as count
             FROM events
             WHERE store_id = ?
               AND is_staff = 0
-              AND event_type IN ('ZONE_ENTER', 'ZONE_DWELL')
+              AND event_type = 'ZONE_ENTER'
               AND zone_id IS NOT NULL
         """, (store_id,))
         row = await cursor.fetchone()
         zone_visitors = row["count"] if row else 0
 
-        # Step 3 — visitors who reached billing area
+        # Step 3 - visitors who reached billing area
         cursor = await db.execute("""
             SELECT COUNT(DISTINCT visitor_id) as count
             FROM events
@@ -42,7 +42,7 @@ async def get_funnel(store_id: str):
         row = await cursor.fetchone()
         billing_visitors = row["count"] if row else 0
 
-        # Step 4 — visitors who purchased
+        # Step 4 - visitors who purchased
         cursor = await db.execute("""
             SELECT COUNT(DISTINCT visitor_id) as count
             FROM sessions
@@ -53,7 +53,6 @@ async def get_funnel(store_id: str):
         row = await cursor.fetchone()
         purchased_visitors = row["count"] if row else 0
 
-        # calculate drop-off percentages safely
         def dropoff(current, previous):
             if previous == 0:
                 return 0.0
@@ -67,7 +66,7 @@ async def get_funnel(store_id: str):
 
         return {
             "store_id": store_id,
-            "session_unit": "unique visitor — re-entries counted once",
+            "session_unit": "unique visitor - re-entries counted once",
             "stages": [
                 {
                     "stage": "entry",
