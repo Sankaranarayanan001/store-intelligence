@@ -24,24 +24,18 @@ visitors who completed a purchase divided by total unique visitors.
 
 ### Camera roles
 
-| Camera | Role         | Logic                                     |
-| ------ | ------------ | ----------------------------------------- |
-| CAM1   | Main floor   | Zone enter + dwell tracking               |
-| CAM2   | Main floor   | Zone enter + dwell tracking               |
-| CAM3   | Entry/exit   | Direction detection via centroid movement |
-| CAM4   | Main floor   | Zone enter + dwell tracking               |
-| CAM5   | Billing area | Queue depth + billing events              |
+| Camera Type                | Purpose                                                               |
+| -------------------------- | --------------------------------------------------------------------- |
+| Entry/Exit Cameras         | Detect customer entry, exit, and re-entry events                      |
+| Zone Monitoring Cameras    | Track customer movement, zone visits, and dwell time                  |
+| Billing Area Cameras       | Monitor checkout activity, queue depth, and billing events            |
+| Store Surveillance Cameras | Generate behavioral events used for analytics and funnel calculations |
+
+The system supports multiple cameras deployed across multiple retail stores. Each camera contributes events such as ENTRY, EXIT, ZONE_ENTER, ZONE_DWELL, and BILLING_QUEUE_JOIN, which are combined to build customer journeys and retail intelligence metrics.
 
 ### Entry/exit detection
 
-CAM3 is positioned outside the store facing the entrance. A person's
-centroid crossing the frame midline determines direction:
-
-- Moving downward past midline = ENTRY
-- Moving upward past midline = EXIT
-
-First appearance at CAM3 also triggers an ENTRY event to maximise
-visitor capture rate.
+The entry/exit camera is positioned near the store entrance. A person's centroid crossing a predefined virtual line determines movement direction. Crossing into the store generates an ENTRY event, while crossing out of the store generates an EXIT event. This approach provides a lightweight and reliable mechanism for estimating store traffic without requiring complex re-identification models.
 
 ### Staff detection heuristic
 

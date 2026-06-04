@@ -19,17 +19,11 @@ better than YOLO variants.
 
 ### What I chose and why
 
-YOLOv8n. The footage is 15fps and the pipeline processes it offline
-so real-time speed is not the primary concern. However YOLOv8n is
-fast enough to process all 5 cameras in under 30 minutes on CPU,
-ByteTrack is built directly into Ultralytics with zero extra setup,
-and the nano model is accurate enough for person detection in retail
-CCTV where people occupy a significant portion of the frame.
+YOLOv8n is fast enough to process multiple retail camera feeds efficiently on CPU while maintaining acceptable person detection accuracy.
 
 RT-DETR would require a separate tracking integration and adds
 complexity without a meaningful accuracy gain for this specific use
-case. If I were deploying this to 40 live stores I would evaluate
-RT-DETR with GPU inference.
+case. For large-scale deployments with significantly higher camera counts, RT-DETR with GPU inference would be evaluated as a potential upgrade for improved detection accuracy.
 
 ---
 
@@ -89,7 +83,7 @@ are known upfront and relatively simple. The analytics queries in
 this system are fixed — unique visitor counts, funnel aggregations,
 zone dwell averages — none of which benefit from ORM query
 composition.
-
+f
 Direct aiosqlite queries are more readable, easier to debug, and
 have less overhead. Every query in this system is a single SQL
 statement that can be read and understood immediately without
