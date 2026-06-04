@@ -310,9 +310,30 @@
   <body>
     <header>
       <h1>⬡ APEX RETAIL — STORE INTELLIGENCE</h1>
+
+      <div style="margin-top: 15px">
+        <label style="margin-right: 10px; color: #f5c542">
+          Select Store:
+        </label>
+
+        <select
+          id="store-select"
+          style="
+            padding: 8px;
+            background: #141420;
+            color: white;
+            border: 1px solid #333;
+            border-radius: 4px;
+          "
+        >
+          <option value="STORE_BLR_001">STORE_BLR_001</option>
+          <option value="STORE_BLR_002" selected>STORE_BLR_002</option>
+        </select>
+      </div>
+
       <p>
         <span id="status-dot"></span>
-        <span id="header-status">Live · Refreshing every 3s · </span>
+        <span id="header-status"> Live · Refreshing every 3s · </span>
         <span id="header-time"></span>
       </p>
     </header>
@@ -404,7 +425,7 @@
     </div>
 
     <script>
-      const STORE = "STORE_BLR_002";
+      let STORE = "STORE_BLR_002";
       const API = "http://localhost:8000";
       const REFRESH = 3000;
 
@@ -595,7 +616,17 @@
         updateHealth(health);
       }
 
-      // start
+      document
+        .getElementById("store-select")
+        .addEventListener("change", (e) => {
+          STORE = e.target.value;
+
+          document.querySelector(".card-title.yellow").textContent =
+            `Live Metrics — ${STORE}`;
+
+          refresh();
+        });
+
       refresh();
       setInterval(refresh, REFRESH);
     </script>
