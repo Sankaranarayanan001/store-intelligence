@@ -17,26 +17,37 @@ async def get_funnel(store_id: str):
         total_entries = row["count"] if row else 0
 
         # Step 2 - visitors who entered at least one zone
+        # only count visitors who also have a session
         cursor = await db.execute("""
-            SELECT COUNT(DISTINCT visitor_id) as count
-            FROM events
-            WHERE store_id = ?
-              AND is_staff = 0
-              AND event_type = 'ZONE_ENTER'
-              AND zone_id IS NOT NULL
-        """, (store_id,))
+    SELECT COUNT(DISTINCT e.visitor_id) as count
+    FROM events e
+    INNER JOIN sessions s
+      ON e.visitor_id = s.visitor_id
+     AND e.store_id = s.store_id
+    WHERE e.store_id = ?
+      AND e.is_staff = 0
+      AND s.is_staff = 0
+      AND (
+          e.event_type = 'BILLING_QUEUE_JOIN'
+          OR e.zone_id = 'BILLING_AREA'
+      )
+""", (store_id,))
         row = await cursor.fetchone()
         zone_visitors = row["count"] if row else 0
 
         # Step 3 - visitors who reached billing area
         cursor = await db.execute("""
-            SELECT COUNT(DISTINCT visitor_id) as count
-            FROM events
-            WHERE store_id = ?
-              AND is_staff = 0
+            SELECT COUNT(DISTINCT e.visitor_id) as count
+            FROM events e
+            INNER JOIN sessions s
+              ON e.visitor_id = s.visitor_id
+             AND e.store_id = s.store_id
+            WHERE e.store_id = ?
+              AND e.is_staff = 0
+              AND s.is_staff = 0
               AND (
-                event_type = 'BILLING_QUEUE_JOIN'
-                OR zone_id IN ('BILLING_AREA', 'BILLING', 'CHECKOUT')
+                e.event_type = 'BILLING_QUEUE_JOIN'
+                OR e.zone_id IN ('BILLING_AREA', 'BILLING', 'CHECKOUT')
               )
         """, (store_id,))
         row = await cursor.fetchone()
@@ -52,6 +63,9 @@ async def get_funnel(store_id: str):
         """, (store_id,))
         row = await cursor.fetchone()
         purchased_visitors = row["count"] if row else 0
+        zone_visitors = min(zone_visitors, total_entries)
+        billing_visitors = min(billing_visitors, zone_visitors)
+        purchased_visitors = min(purchased_visitors, billing_visitors)
 
         def dropoff(current, previous):
             if previous == 0:

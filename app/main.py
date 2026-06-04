@@ -21,8 +21,26 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     from app.db import init_db
     from app.pos_loader import load_pos_transactions
+    from app.ingestion import ingest_events
+    import json
+    import os
     await init_db()
     await load_pos_transactions("./data/pos_transactions.csv")
+    # auto ingest events on startup if database is empty
+    events_file = "./events.jsonl"
+    if os.path.exists(events_file):
+        async with __import__('aiosqlite').connect(
+            __import__('os').getenv("DB_PATH", "./store.db")
+        ) as db:
+            cursor = await db.execute("SELECT COUNT(*) FROM events")
+            row = await cursor.fetchone()
+            count = row[0] if row else 0
+        if count == 0:
+            with open(events_file, encoding="utf-8") as f:
+                events = [json.loads(line) for line in f if line.strip()]
+            if events:
+                await ingest_events(events)
+                print(f"Auto-ingested {len(events)} events on startup")
     yield
 
 app = FastAPI(lifespan=lifespan)

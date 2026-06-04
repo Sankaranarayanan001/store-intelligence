@@ -8,7 +8,8 @@ from ultralytics import YOLO
 
 # ─── Camera roles ───────────────────────────────────────────
 # NEW — spaces in names + CAM4 is now floor not empty
-CAMERA_ROLES = {
+# Store 1 camera roles
+CAMERA_ROLES_STORE1 = {
     "CAM 1": {"role": "floor",   "camera_id": "CAM_FLOOR_01",   "zone": "MAIN_FLOOR"},
     "CAM 2": {"role": "floor",   "camera_id": "CAM_FLOOR_02",   "zone": "MAIN_FLOOR"},
     "CAM 3": {"role": "entry",   "camera_id": "CAM_ENTRY_03",   "zone": None},
@@ -16,7 +17,18 @@ CAMERA_ROLES = {
     "CAM 5": {"role": "billing", "camera_id": "CAM_BILLING_05", "zone": "BILLING_AREA"},
 }
 
-STORE_ID   = "STORE_BLR_002"
+# Store 2 camera roles
+CAMERA_ROLES_STORE2 = {
+    "zone":         {"role": "floor",   "camera_id": "CAM_FLOOR_S2_01",   "zone": "MAIN_FLOOR"},
+    "entry 1":      {"role": "entry",   "camera_id": "CAM_ENTRY_S2_01",   "zone": None},
+    "entry 2":      {"role": "entry",   "camera_id": "CAM_ENTRY_S2_02",   "zone": None},
+    "billing_area": {"role": "billing", "camera_id": "CAM_BILLING_S2_01", "zone": "BILLING_AREA"},
+}
+
+STORE_IDS = {
+    "store1": "STORE_BLR_001",
+    "store2": "STORE_BLR_002",
+}
 BASE_TIME = datetime(2026, 4, 10, 12, 0, 0, tzinfo=timezone.utc)
 FRAME_H    = 1080
 ENTRY_LINE = FRAME_H // 2   # horizontal line across frame for entry/exit
@@ -231,8 +243,10 @@ def process_billing_camera(
         dwell_tracker[key]["zone_enter_emitted"] = True
 
 
-def process_video(video_path: str, cam_name: str, output_path: str):
-    config    = CAMERA_ROLES[cam_name]
+def process_video(video_path: str, cam_name: str, output_path: str, camera_roles: dict, store_id: str):
+    global STORE_ID
+    STORE_ID = store_id          # ← add this line
+    config    = camera_roles[cam_name]
     role      = config["role"]
     camera_id = config["camera_id"]
     zone      = config["zone"]
@@ -327,21 +341,30 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", default="./data")
     parser.add_argument("--output",   default="./events.jsonl")
+    parser.add_argument("--store",    default="all", choices=["store1", "store2", "all"])
     args = parser.parse_args()
 
-    # clear output file
     open(args.output, "w").close()
-
     total_events = 0
-    # NEW
-    for cam_name in ["CAM 1", "CAM 2", "CAM 3", "CAM 4", "CAM 5"]:
-        video_path = os.path.join(args.data_dir, f"{cam_name}.mp4")
-        count = process_video(video_path, cam_name, args.output)
-        total_events += count
 
-    print(f"\nAll cameras done. Total events: {total_events}")
-    print(f"Output written to: {args.output}")
+    if args.store in ("store1", "all"):
+        print("\n=== Processing Store 1 ===")
+        for cam_name in ["CAM 1", "CAM 2", "CAM 3", "CAM 5"]:
+            video_path = os.path.join(args.data_dir, "store1", f"{cam_name}.mp4")
+            count = process_video(video_path, cam_name, args.output,
+                                  CAMERA_ROLES_STORE1, STORE_IDS["store1"])
+            total_events += count
 
+    if args.store in ("store2", "all"):
+        print("\n=== Processing Store 2 ===")
+        for cam_name in ["zone", "entry 1", "entry 2", "billing_area"]:
+            video_path = os.path.join(args.data_dir, "store2", f"{cam_name}.mp4")
+            count = process_video(video_path, cam_name, args.output,
+                                  CAMERA_ROLES_STORE2, STORE_IDS["store2"])
+            total_events += count
+
+    print(f"\nAll done. Total events: {total_events}")
+    print(f"Output: {args.output}")
 
 if __name__ == "__main__":
     main()
